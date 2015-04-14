@@ -362,10 +362,9 @@ int main(int argc, char* argv[]) {
 
 	#ifdef WIN32
 	WSADATA wsadata;
-	printf("wsastartup\n");
 	iresult = WSAStartup(MAKEWORD(2,2), &wsadata);
 
-	if (iresult!=0) {
+	if (iresult != 0) {
 		printf("WSAStartup failed. error code: %d.\n", WSAGetLastError());
 		getchar();
 		return 0;
@@ -412,7 +411,7 @@ int main(int argc, char* argv[]) {
 
 	int seq;
 
-	if (mode=="o") {
+	if (mode == "o") {
 
 		while (1) {
 
@@ -422,7 +421,6 @@ int main(int argc, char* argv[]) {
 				printf("accept() error: %d\n", errno);
 				break;
 			}
-			printf("accept() success\n");
 
 			seq = client_ref;
 			client_ref++;
@@ -432,7 +430,7 @@ int main(int argc, char* argv[]) {
 
 
 		}
-	} else if (mode=="p") {
+	} else if (mode == "p") {
 
 		thrd_t *handles = new thrd_t[max_thread_number];
 
