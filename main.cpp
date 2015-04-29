@@ -344,7 +344,7 @@ int main(int argc, char* argv[]) {
 	cnd_init(&gCond);
 
 	char *port = "12345";
-	char *mode = "p";  // 'o' => on demand, 'p' => thread pool
+	char mode = 'p';  // 'o' => on demand, 'p' => thread pool
 	int max_thread_number = atol("5");
 
 	int i;
@@ -411,7 +411,7 @@ int main(int argc, char* argv[]) {
 
 	int seq;
 
-	if (mode == "o") {
+	if (mode == 'o') {
 
 		while (1) {
 
@@ -430,7 +430,7 @@ int main(int argc, char* argv[]) {
 
 
 		}
-	} else if (mode == "p") {
+	} else if (mode == 'p') {
 
 		thrd_t *handles = new thrd_t[max_thread_number];
 
