@@ -36,14 +36,10 @@
 
 int client_ref;
 int server_soc;
-
 int global_thread_number;
-
 int global_client_number;
-
 sockaddr client_sockaddr1[max_number];
 int client_soc1[max_number];
-
 
 struct queue{
 	thrd_t *client_soc2;
@@ -52,7 +48,6 @@ struct queue{
 };
 
 struct queue q;
-
 
 struct threadpool_t{
 	mtx_t lock;
@@ -73,11 +68,9 @@ typedef struct {
 	void *argument;
 } threadpool_task_t;
 
-
 static void *threadpool_thread(void *threadpool) {
 	threadpool_t *pool = (threadpool *) threadpool;
 	threadpool_task_t task;
-
 	for (;;) {
 		mtx_lock(&(pool.lock));
 		while ((pool.count==0)&&(!pool.shutdown)) {
@@ -86,64 +79,44 @@ static void *threadpool_thread(void *threadpool) {
 		if ((pool->shutdown == immediate_shutdown) || ((pool->shutdown == graceful_shutdown) && (pool->count == 0))) {
             break;
         }
-
         task.function = pool.queue[pool.head].function;
         task.function = pool.queue[pool.head].argument;
         pool.head += 1;
         pool.head = (pool.head == pool.queue_size) ? 0 : pool.head;
         pool.count -= 1;
-
         mtx_unlock(&(pool.lock));
-
         (*(task.function))(task.argument);
-
-
 	}
-
 	pool.started--;
 	mtx_unlock(&(pool.lock));
 	thrd_exit(NULL);
 	return(NULL);
-
 }
 
-
 threadpool_t *threadpool_create(int thread_count, int queue_size, int flags) {
-
 	threadpool_t *pool;
 	int i;
-
 	if ((pool = (threadpool_t *)malloc(sizeof(threadpool_t))) == NULL) {
 		goto err;
 	}
-
 	pool.thread_count = 0;
 	pool.queue_size = queue_size;
 	pool.head = pool.tail = pool.count = 0;
 	pool.shutdown = pool.started = 0;
-
 	pool.threads = (thrd_t *)malloc(sizeof(thrd_t) * thread_count);
 	pool.queue = (threadpool_task_t *)malloc(sizeof(threadpool_task_t) * queue_size);
-	
 	mtx_init(&(pool.lock));
 	cnd_init(&(pool.notify));
-
 	for (i=0; i<thread_count; i++) {
 		thrd_create(&(pool.threads[i]), NULL, threadpool_thread, (void*)pool);
 		pool.thread_count++;
 		pool.started++;
 	}
-
 	return pool;
-
 }
 
-
-
 mtx_t gMutex;
-
 cnd_t gCond;
-
 
 void enqueue(SOCKET soc) {
 	q.rear = (q.rear + 1) % max_number;
@@ -154,7 +127,6 @@ void enqueue(SOCKET soc) {
 	}
 }
 
-
 SOCKET dequeue(void) {
 	if (q.front == q.rear) {
 		exit(1);
@@ -164,31 +136,19 @@ SOCKET dequeue(void) {
 	}
 }
 
-
-
 int tcp_recv_send_thread1(void *aArg) {
-
 	int iresult;
-
 	int seq = *(int*)&aArg;
-
 	char *buf = new char[102400];
-
 	char buffer[102400];
-
-	long recv_size;
-
-	recv_size = recv(client_soc1[seq], buffer, 8192, 0);
+	long recv_size = recv(client_soc1[seq], buffer, 8192, 0);;
 	if (recv_size < 0) {
 		printf("recv() error: %d\n", errno);
 		return 0;
 	}
-
 	char *test = strtok(buffer, "\n");
-
 	char part[50][50];
 	char *temp;
-
 	int i = 0;
 	if ((temp = strtok(buffer, " "))) {
 		strcpy(part[i++], temp);
@@ -196,74 +156,48 @@ int tcp_recv_send_thread1(void *aArg) {
 			strcpy(part[i++], temp);
 		}
 	}
-
 	char *path = part[1];
-
 	memmove(path, path + 1, strlen(path));
-
 	if (!*path) {
 		path = "index.html";
 	}
-
-	FILE *fileptr;
 	char eachline[1000];
-
-	fileptr = fopen(path, "r");
+	FILE *fileptr = fopen(path, "r");
 	if (!fileptr) {
 		printf("fopen() error\n");
 		fileptr = fopen("404error.html", "r");
 	}
-
 	while (fgets(eachline, 1000, fileptr) != NULL) {
 		iresult = send(client_soc1[seq], eachline, strlen(eachline), 0);
 		if (iresult == -1) {
 			printf("send() error: %d\n", errno);
 		}
 	}
-
 	fclose(fileptr);
 	close(client_soc1[seq]);
-
 	return 0;
 }
 
-
 int tcp_recv_send_thread2(void *aArg) {
-
 	int seq;
-
 	while (1) {
-
 		mtx_lock(&gMutex);
-
 		cnd_wait(&gCond, &gMutex);
-
 		global_client_number--;
-
 		SOCKET client_local_soc = dequeue();
-
 		mtx_unlock(&gMutex);
-
 		int iresult;
-
 		char *buf = new char[102400];
-
 		char buffer[102400];
-
 		long recv_size;
-
 		recv_size = recv(client_local_soc, buffer, 8192, 0);
 		if (recv_size < 0) {
 			printf("recv() error: %d\n", errno);
 			return 0;
 		}
-
 		char *test = strtok(buffer, "\n");
-		printf("%s\n", test);
-
 		char part[50][50];
 		char *temp;
-
 		int i = 0;
 		if ((temp = strtok(buffer, " "))) {
 			strcpy(part[i++], temp);
@@ -271,15 +205,11 @@ int tcp_recv_send_thread2(void *aArg) {
 				strcpy(part[i++], temp);
 			}
 		}
-
 		char *path = part[1];
-
 		memmove(path, path + 1, strlen(path));
-
 		if (!*path) {
 			path = "index.html";
 		}
-
 		FILE *fileptr;
 		char eachline[1000];
 
@@ -295,66 +225,47 @@ int tcp_recv_send_thread2(void *aArg) {
 				printf("send() error: %d\n", errno);
 			}
 		}
-
 		fclose(fileptr);
 		close(client_local_soc);
 	}
-	
-
 	return 0;
 }
 
-
 int tcp_accept_thread(void *aArg) {
-
 	global_thread_number++;
-
 	int seq;
-
 	while (1) {
-
 		mtx_lock(&gMutex);
-
 		int addrlen = sizeof(struct sockaddr);
 		client_soc1[client_ref] = accept(server_soc, &client_sockaddr1[client_ref], (socklen_t*)&addrlen);
 		if (client_soc1[client_ref] == -1) {
 			printf("accept() error: %d\n", errno);
 			break;
 		}
-
 		seq = client_ref;
 		client_ref++;
-
 		mtx_unlock(&gMutex);
-
 		thrd_t t;
 		thrd_create(&t, tcp_recv_send_thread1, (void*)seq);
-
-
 	}
-
 	return 0;
 }
 
-
-
 int main(int argc, char* argv[]) {
-
 	mtx_init(&gMutex, mtx_plain);
 	cnd_init(&gCond);
 
 	char *port = "12345";
-	char mode = 'p';  // 'o' => on demand, 'p' => thread pool
+	char *mode = "p";  // 'o' => on demand, 'p' => thread pool
 	int max_thread_number = atol("5");
 
 	int i;
 
 	q.client_soc2 = new thrd_t[100];
-
 	q.front = -1;
 	q.rear = -1;
 
-	int iresult = NULL;
+	int iresult;
 
 	client_ref = 0;
 	global_thread_number = 0;
@@ -396,7 +307,6 @@ int main(int argc, char* argv[]) {
 	tempsockaddr = *result->ai_addr;
 	freeaddrinfo(result);
 
-
 	iresult = bind(server_soc, &tempsockaddr, sizeof(struct sockaddr_in));
 	if (iresult != 0) {
 		printf("bind() failed: %d\n", errno);
@@ -410,38 +320,26 @@ int main(int argc, char* argv[]) {
 	}
 
 	int seq;
-
-	if (mode == 'o') {
-
+	if (mode == "o") {
 		while (1) {
-
 			int addrlen = sizeof(struct sockaddr);
 			client_soc1[client_ref] = accept(server_soc, &client_sockaddr1[client_ref], (socklen_t*)&addrlen);
 			if (client_soc1[client_ref] == -1) {
 				printf("accept() error: %d\n", errno);
 				break;
 			}
-
 			seq = client_ref;
 			client_ref++;
-
 			thrd_t t;
 			thrd_create(&t, tcp_recv_send_thread1, (void*)seq);
-
-
 		}
-	} else if (mode == 'p') {
-
+	} else if (mode == "p") {
 		thrd_t *handles = new thrd_t[max_thread_number];
-
 		for (i = 0; i < max_thread_number; i++) {
 			thrd_create(&handles[i], tcp_recv_send_thread2, (void*)0);
 		}
-
 		while (1) {
-
 			SOCKET tempsoc;
-			
 			int addrlen = sizeof(struct sockaddr);
 			tempsoc = accept(server_soc, &client_sockaddr1[client_ref], (socklen_t*)&addrlen);
 			mtx_lock(&gMutex);
@@ -449,20 +347,13 @@ int main(int argc, char* argv[]) {
 				printf("accept() error: %d\n", errno);
 				continue;
 			}
-
 			enqueue(tempsoc);
-
 			global_client_number++;
-
 			mtx_unlock(&gMutex);
-
 			cnd_signal(&gCond);
 		}
-
 	}
-
 	mtx_destroy(&gMutex);
 	cnd_destroy(&gCond);
-
 	return 0;
 }
