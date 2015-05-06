@@ -1,4 +1,3 @@
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -6,7 +5,6 @@
 
 #include "tinycthread.h"
 #include "es_timer.h"
-
 
 #ifdef WIN32 // Windows
 # include <winsock2.h>
